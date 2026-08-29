@@ -26,6 +26,13 @@ export interface Stage {
  * The curve. Each stage introduces exactly one new idea and then gives the
  * player time to get used to it before the next one lands — the whole teaching
  * budget is spent here, since nothing is allowed to explain itself in words.
+ *
+ * The two late intervals are measured, not guessed. Once a hit stopped ending
+ * the run outright and started draining a pool, the old spacing meant a careful
+ * player died around 90s of a 120s run almost every time — the rocket had
+ * become scenery nobody reached. Playing the sim across 40 seeds with a
+ * look-ahead policy put these values where a good run gets home a bit more
+ * often than not, and a careless one still dies before the first minute is up.
  */
 const STAGES: readonly { until: number; stage: Stage }[] = [
   {
@@ -47,7 +54,7 @@ const STAGES: readonly { until: number; stage: Stage }[] = [
     stage: {
       name: "incoming",
       kinds: ["rock", "shard", "panel", "bolts", "asteroid"],
-      interval: 0.82,
+      interval: 0.95,
       speed: 1.16,
     },
   },
@@ -58,7 +65,7 @@ const STAGES: readonly { until: number; stage: Stage }[] = [
     stage: {
       name: "storm",
       kinds: ["rock", "shard", "panel", "bolts", "asteroid", "satellite", "comet"],
-      interval: 0.6,
+      interval: 0.8,
       speed: 1.34,
     },
   },

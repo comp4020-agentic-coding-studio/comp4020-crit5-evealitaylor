@@ -95,9 +95,16 @@ body[data-phase="flying"] nav {
   opacity: 0;
 }
 
-body[data-phase="lost"] #wordmark,
-body[data-phase="won"] #wordmark {
+body[data-phase="lost"] #wordmark {
   opacity: 0.32;
+  transform: translate(-50%, -50%) scale(0.72);
+}
+
+/* Not on a win. The name sits exactly where the rocket docks, and having it
+   land across the ship turns the one moment the game is building towards into
+   a collision of two things. The arrival is allowed to be the whole screen. */
+body[data-phase="won"] #wordmark {
+  opacity: 0;
   transform: translate(-50%, -50%) scale(0.72);
 }
 

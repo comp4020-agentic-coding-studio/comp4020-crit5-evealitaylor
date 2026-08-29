@@ -388,6 +388,91 @@ describe("nothing explains the game", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Is the game actually playable to an ending?
+//
+// Every other test here checks a rule in isolation. None of them can tell me
+// whether the rules add up to a game a person can finish — and once a hit
+// started draining a pool instead of ending the run, the balance moved far
+// enough that a careful player stopped reaching the rocket at all.
+//
+// So this plays the real simulation with a policy that stands in for someone
+// paying attention: look a beat ahead, steer for the emptiest nearby space,
+// and ride out a spin rather than spending the booster on it. Over a fixed set
+// of seeds it has to both get home and die. A build where it never wins is
+// unwinnable; one where it never loses is the bug the player reported.
+// ---------------------------------------------------------------------------
+
+/** Where an attentive player would move next: away from where debris is going. */
+function attentiveAim(world: World): { x: number; y: number } {
+  const { astro } = world;
+  let best = { x: astro.x, y: astro.y, cost: Number.POSITIVE_INFINITY };
+  for (let i = 0; i < 32; i += 1) {
+    const angle = (i / 32) * Math.PI * 2;
+    for (const reach of [80, 180]) {
+      const x = Math.min(world.width - 30, Math.max(30, astro.x + Math.cos(angle) * reach * world.scale));
+      const y = Math.min(world.height - 30, Math.max(30, astro.y + Math.sin(angle) * reach * world.scale));
+      let cost = reach * 0.002;
+      for (const piece of world.debris) {
+        const lead = 0.55;
+        const gap =
+          Math.hypot(piece.x + piece.vx * lead - x, piece.y + piece.vy * lead - y) -
+          (piece.r + astro.r);
+        const near = 190 * world.scale;
+        if (gap < near) cost += (near - gap) ** 2 / 900;
+      }
+      if (cost < best.cost) best = { x, y, cost };
+    }
+  }
+  return best;
+}
+
+/** Play one whole run at 60fps and report how it ended. */
+function playOut(seed: number): World {
+  const world = createWorld({ width: 1920, height: 1080, seed });
+  step(world, 1 / 60, { aimX: world.astro.x, aimY: world.astro.y, tapped: true });
+  let guard = 0;
+  while (world.phase === "flying" && guard < 60 * (RUN_SECONDS + 5)) {
+    const aim = attentiveAim(world);
+    step(world, 1 / 60, { aimX: aim.x, aimY: aim.y, tapped: false });
+    guard += 1;
+  }
+  return world;
+}
+
+describe("the run, played end to end", () => {
+  const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
+  const played = SEEDS.map(playOut);
+
+  it("can be finished — someone paying attention reaches the rocket", () => {
+    const won = played.filter((world) => world.phase === "won");
+    expect(
+      won.length,
+      `no seed of ${SEEDS.length} reached the rocket, so the destination is decoration`,
+    ).toBeGreaterThan(0);
+  });
+
+  it("can still be lost — attention alone is not a guarantee", () => {
+    const lost = played.filter((world) => world.phase === "lost");
+    expect(
+      lost.length,
+      `every seed of ${SEEDS.length} got home, which is what the player complained about`,
+    ).toBeGreaterThan(0);
+  });
+
+  it("never ends in the same breath as it starts", () => {
+    for (const world of played) {
+      expect(world.elapsed).toBeGreaterThan(20);
+    }
+  });
+
+  it("spends the health pool rather than ending on one unlucky hit", () => {
+    for (const world of played.filter((w) => w.phase === "lost")) {
+      expect(world.grazes).toBeGreaterThan(1);
+    }
+  });
+});
+
 // The sensors that used to sit here now live in spec/sensors.test.ts. They are
 // harness rather than contract: this file retires with the crit-5 brief, and
 // they carry forward.
