@@ -227,6 +227,9 @@ describe("a run", () => {
   it("lets the booster cut a spin short — the choice the game turns on", () => {
     const world = startedRun();
     world.debris = [];
+    // The tap that starts a run spends the booster, so arm it deliberately:
+    // this test is about the rescue, not about what the opening tap costs.
+    world.booster = createBooster();
     world.astro.spin = SPIN_DURATION;
     const rescued = fly(world, DT, true);
     expect(inControl(rescued.astro)).toBe(true);
