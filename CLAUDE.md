@@ -83,8 +83,30 @@ how a hard-won check gets thrown away at the end of the week.
 **A sensor I have not seen go red is decoration.** Break the thing it guards,
 watch it fail, restore, watch it pass. Then commit it.
 
+## Tuning
+
+**If a design question has a number in it, measure it — don't feel it.** Keeping
+the simulation pure and canvas-free was a testability decision, but its real
+payoff was that a whole run can be played in Node. When difficulty needed
+tuning, forty seeded playthroughs with a stand-in policy answered in seconds
+what guessing would have got wrong. Any module I might one day want to *ask a
+question of* stays free of the DOM.
+
+**A bot that never dodges measures nothing.** Driving the page with a fixed
+sine sweep "proved" the game was brutally hard; it just never avoided anything.
+Before believing a number, check the thing producing it is playing the game.
+
 ## Process
 
 **Commit at each moment worth citing**, with a message saying what was learned,
 not just what changed — `PROCESS.md` cites these by SHA and
 `pnpm check:evidence` resolves them.
+
+**`check:evidence` only sees inline `[`sha`](url)` citations.** Reference-style
+markdown links render perfectly on GitHub and are invisible to the gate. Cite
+inline, and run the gate before assuming the file is done.
+
+**Word counts come from the assessment page, not from memory.** A crit-week
+`PROCESS.md` and each reflection are 150--300 words; assignments and the final
+project are longer. Overshooting is not penalised directly but reads as poor
+scoping.
