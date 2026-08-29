@@ -46,7 +46,7 @@ body {
   top: 34%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: clamp(2.6rem, 11vw, 8rem);
+  font-size: min(8rem, 8vw);
   font-weight: 800;
   letter-spacing: 0.28em;
   text-indent: 0.28em;
@@ -105,5 +105,17 @@ body[data-phase="won"] #wordmark {
   #wordmark,
   nav {
     transition: none;
+  }
+}
+
+/* The name is set in whatever font the machine actually has, and the fallbacks
+   are far wider than Avenir Next. Narrow screens get their own size and a
+   tighter track so the word can never be clipped — a title a stranger reads as
+   "SPACEWAL" is the first thing they'd see. */
+@media (max-width: 700px) {
+  #wordmark {
+    font-size: 7vw;
+    letter-spacing: 0.14em;
+    text-indent: 0.14em;
   }
 }
