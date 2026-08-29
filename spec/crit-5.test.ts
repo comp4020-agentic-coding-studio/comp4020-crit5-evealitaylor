@@ -309,28 +309,6 @@ describe("nothing explains the game", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// SENSOR — carries into next week's repo, whatever the brief is.
-//
-// Shipping the template's placeholder copy is the cheapest possible way to lose
-// marks, and it is invisible locally because the page still looks fine. Wired
-// into `check` so it can only happen once.
-// ---------------------------------------------------------------------------
-describe("sensor: no template boilerplate ships", () => {
-  const LEFTOVERS = [
-    "Replace this with",
-    "TEMPLATE:",
-    "COMP4020 prototype",
-    "your prototype",
-    "lorem ipsum",
-  ];
-
-  for (const { name, body } of textFiles) {
-    it(`${name} is the student's own work`, () => {
-      const found = LEFTOVERS.filter((phrase) =>
-        body.toLowerCase().includes(phrase.toLowerCase()),
-      );
-      expect(found, `${name} still ships template copy: ${found.join(", ")}`).toEqual([]);
-    });
-  }
-});
+// The sensors that used to sit here now live in spec/sensors.test.ts. They are
+// harness rather than contract: this file retires with the crit-5 brief, and
+// they carry forward.
