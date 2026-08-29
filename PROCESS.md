@@ -1,70 +1,35 @@
 # Process overview
 
-<!-- TEMPLATE: this file is a shape to fill in, not a form. Replace everything
-     in it with your own overview, and delete this comment — `pnpm
-     check:evidence` will remind you if it's still here. -->
-
-A reading-guide to how the work came together --- a map to your process, not an
-essay about it. Markers read this file and follow its citations; they don't
-trawl the repo for evidence you didn't point at, so if a moment mattered, cite
-it.
-
-This file is the shape; the course site's
-[assessment page](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#what-you-submit)
-is the requirement, and its
-[word counts](https://comp.anu.edu.au/courses/comp4020-agentic-coding-studio/topics/assessment/#word-counts)
-cover every deliverable.
-
 ## What I built
 
-One paragraph: the thing, and the idea behind it.
+**SPACEWALK** — an astronaut with jet boots drifts home through a debris field.
+The pointer steers, a tap spends a booster. Since the spec forbids instructions
+anywhere, the tap that starts a run is the same tap that spends the booster:
+starting *is* the lesson.
 
 ## The moments that mattered
 
-Three or four for an assignment; fewer is fine for a weekly prototype. Keep the
-list short so each moment has room to do all four jobs:
+**1. The rule nobody may write down became a test.** "Teaches itself" is the
+easiest line to breach by accident, so I made it mechanical first: a test
+grepping the built `dist/` for *click to*, *press the*, *controls* and eleven
+more. It started red against the template's own copy. [`4f5f8ce`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-evealitaylor/commit/4f5f8ce)
 
-1. **what happened** --- the problem, or the thing that went wrong
-2. **what you did instead of the obvious thing** --- the call you made, and why
-   it beat the obvious one
-3. **how you knew it was right** --- the check you ran, the viewport you looked
-   at, what you read before accepting the diff
-4. **the citation** --- a commit or commit range, a `CLAUDE.md` change, a check
-   that went from red to green, a prompt paired with the commit it produced
+**2. A green check that was lying.** All 44 tests passed while the title read
+**SPACEWAL** on a phone; only a screenshot caught it. Rather than just fix the
+CSS, the lesson went into the harness — a sensor failing any `nowrap` rule
+without a viewport-relative `font-size`, filed in `spec/sensors.test.ts` so it
+outlives this brief. I broke it, watched it go red, restored it.
+[`d6489f6`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-evealitaylor/commit/d6489f6), [`7b36da9`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-evealitaylor/commit/7b36da9)
 
-Jobs 2 and 3 are the ones the repo can't tell a reader on its own, so they're
-where the marks are. The strongest moments are the ones where a correction
-landed in the **harness** --- the standards and checks your work has to satisfy
---- rather than in a retry: a rule added to `CLAUDE.md`, a check wired up, an
-attempt thrown away. Retrying until it passes is the routine case, and changing
-what the work runs against is the skilled one.
+**3. The change that came from playing.** The report: *"i got hit a lot of times
+and never actually died"*. Rather than restore instant death, a hit now drains a
+six-point pool drawn as a ring inside the booster ring, so its cost is visible
+as it lands. [`57a1a37`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-evealitaylor/commit/57a1a37)
 
-Cite each moment as a link whose text is the commit hash or range and whose
-target is this repo's commit or compare URL, so a reader clicks straight to the
-evidence:
+![The ring draining across one run: green, amber, red, then death](docs/health-bands.png)
 
-- one commit: [`a1b2c3d`](https://github.com/YOUR-ORG/YOUR-REPO/commit/a1b2c3d)
-- a range:
-  [`a1b2c3d...e4f5a6b`](https://github.com/YOUR-ORG/YOUR-REPO/compare/a1b2c3d...e4f5a6b)
-
-To pair a prompt with the commit it produced, quote the prompt (curated, not a
-full transcript) next to the citation:
-
-> the prompt, verbatim
-
-Screenshots are welcome where one carries the verification better than a
-sentence does. Commit the file to this repo and link it with a **relative**
-path, which is what makes it render on GitHub: `![alt text](docs/before.png)`.
-Images don't count towards the word count and don't replace the citation.
-
-## Before you ship
-
-`pnpm check:evidence` verifies your citations resolve to real commits, that a
-reflection entry the marker reads is in `reflections/`, and that your
-`CLAUDE.md` is there --- before a marker ever opens the file. It checks that
-your map is traceable, not that it is good: the marker judges whether your
-small, deliberately chosen set of moments shows real judgement and reflection. A
-green check is not a substitute for that curation.
-
-Images aren't checked: unlike a citation whose SHA doesn't resolve, a broken
-image is visible the moment this file is rendered on GitHub.
+**4. Fixing "can be lost" broke "can be won".** A careful player now died around
+90s of a 120s run, never seeing the rocket. Instead of tuning by feel I played
+the real simulation across 40 seeds with a look-ahead policy, moved two spawn
+intervals until it got home 24 times in 40 — worst run still dead at 64s — then
+made that probe a test demanding *both* endings. [`71b262b`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-evealitaylor/commit/71b262b)
