@@ -164,6 +164,19 @@ function titleStep(world: World, dt: number, input: Input): void {
 
 function endStep(world: World, dt: number, input: Input): void {
   drift(world, dt);
+
+  // Keep the wreck moving. A suit that froze the instant it was hit would read
+  // as a bug rather than as an ending.
+  if (world.phase === "lost") {
+    const astro = world.astro;
+    astro.x += astro.vx * dt;
+    astro.y += astro.vy * dt;
+    astro.angle += astro.spinRate * dt;
+    const glide = Math.exp(-0.55 * dt);
+    astro.vx *= glide;
+    astro.vy *= glide;
+    astro.flash = Math.max(0, astro.flash - dt);
+  }
   // A short lockout: the click that killed you must not also restart you before
   // you have seen what happened.
   if (input.tapped && world.sinceEnd > 0.9) resetWorld(world);
