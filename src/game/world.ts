@@ -17,6 +17,7 @@ import {
 import { classifyHit } from "./collision.ts";
 import { hasLeft, spawnDebris, stepDebris, type Debris } from "./debris.ts";
 import { RUN_SECONDS, stageAt } from "./difficulty.ts";
+import { HEALTH_MAX, applyDamage, isSpent } from "./health.ts";
 import { makeRng, pick, range, type Rng } from "./rng.ts";
 import type { Phase } from "./types.ts";
 
@@ -32,6 +33,8 @@ export interface World {
   elapsed: number;
   astro: Astronaut;
   booster: Booster;
+  /** What the suit has left, HEALTH_MAX down to 0. The inner ring draws it. */
+  health: number;
   debris: Debris[];
   width: number;
   height: number;
@@ -78,6 +81,7 @@ export function createWorld(options: WorldOptions): World {
     elapsed: 0,
     astro: createAstronaut(options.width / 2, options.height * 0.68, ASTRO_RADIUS * scale),
     booster: createBooster(),
+    health: HEALTH_MAX,
     debris: [],
     width: options.width,
     height: options.height,
@@ -247,7 +251,17 @@ function flyingStep(world: World, dt: number, input: Input): void {
     for (const piece of world.debris) {
       const hit = classifyHit(world.astro, piece);
       if (hit === "miss") continue;
-      if (hit === "fatal") {
+
+      // Every hit costs the suit something and sends it tumbling; a dead-on
+      // one costs three times what a clip does. Nothing ends the run except
+      // running out — which is what makes the ring worth watching.
+      const fatal = hit === "fatal";
+      world.health = applyDamage(world.health, hit);
+      world.grazes += 1;
+      world.shake = Math.max(world.shake, fatal ? 0.85 : 0.5);
+      spinOut(world.astro, piece.x, piece.y, (fatal ? 470 : 280) * world.scale);
+
+      if (isSpent(world.health)) {
         world.phase = "lost";
         world.sinceEnd = 0;
         world.shake = 1;
@@ -255,9 +269,6 @@ function flyingStep(world: World, dt: number, input: Input): void {
         world.astro.flash = 0.6;
         return;
       }
-      spinOut(world.astro, piece.x, piece.y, 280 * world.scale);
-      world.grazes += 1;
-      world.shake = Math.max(world.shake, 0.5);
       break;
     }
   }

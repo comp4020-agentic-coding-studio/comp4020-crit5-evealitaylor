@@ -1,5 +1,6 @@
 import type { Astronaut } from "../game/astronaut.ts";
 import type { Debris } from "../game/debris.ts";
+import type { HealthBand } from "../game/health.ts";
 
 const INK = "#151129";
 
@@ -60,7 +61,17 @@ export interface AstronautStyle {
   boosting: boolean;
   time: number;
   calm: boolean;
+  /** 0..1 of the suit's health, drawn as an inner ring. */
+  health: number;
+  band: HealthBand;
 }
+
+/** Green while it's fine, amber once it isn't, red when one more hit does it. */
+const BAND_COLOUR: Record<HealthBand, string> = {
+  ok: "#4ade80",
+  hurt: "#fbbf24",
+  critical: "#f87171",
+};
 
 /**
  * The whole booster interface: a ring around the suit that empties when spent
@@ -97,6 +108,33 @@ export function drawChargeRing(
     }
     ctx.stroke();
   }
+
+  /* --- the suit, inside the booster ---------------------------------- */
+  // Drawn inside the charge ring so the two never get confused: the outer one
+  // is what you spend, the inner one is what you have left. Colour carries the
+  // meaning, so it reads at a glance without ever counting the arc.
+  const inner = r * 1.42;
+  const colour = BAND_COLOUR[style.band];
+
+  ctx.beginPath();
+  ctx.arc(0, 0, inner, 0, Math.PI * 2);
+  ctx.lineWidth = Math.max(2, r * 0.13);
+  ctx.strokeStyle = "rgba(120, 140, 190, 0.2)";
+  ctx.shadowBlur = 0;
+  ctx.stroke();
+
+  if (style.health > 0.001) {
+    // The last band breathes, so running out is something you see coming.
+    const urgent = style.band === "critical" && !style.calm;
+    ctx.beginPath();
+    ctx.arc(0, 0, inner, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * style.health);
+    ctx.lineWidth = Math.max(2.5, r * 0.17);
+    ctx.strokeStyle = colour;
+    ctx.shadowColor = colour;
+    ctx.shadowBlur = urgent ? 8 + pulse * 20 : 8;
+    ctx.stroke();
+  }
+
   ctx.restore();
 }
 

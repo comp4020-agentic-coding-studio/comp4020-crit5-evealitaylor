@@ -1,5 +1,6 @@
 import { isBoosting, boosterCharge, isBoosterReady } from "../game/booster.ts";
 import { rocketApproach } from "../game/difficulty.ts";
+import { healthBand, healthFraction } from "../game/health.ts";
 import { isInvulnerable } from "../game/astronaut.ts";
 import type { Phase } from "../game/types.ts";
 import type { World } from "../game/world.ts";
@@ -30,13 +31,16 @@ export class Renderer {
     this.field = createStarfield(width, height);
   }
 
-  private rocket(world: World): { x: number; y: number; size: number } {
+  private rocket(world: World): { x: number; y: number; size: number; alpha: number } {
     const approach = rocketApproach(world.elapsed);
     const full = Math.min(world.width, world.height) * 0.11;
     return {
       x: world.width / 2,
       y: world.height * 0.2,
-      size: full * (0.06 + 0.94 * approach),
+      // Comes in at half size and grows, rather than from a speck — a speck is
+      // what made it read as background furniture for the whole run.
+      size: full * (0.5 + 0.5 * approach),
+      alpha: Math.min(1, approach * 3),
     };
   }
 
@@ -101,7 +105,11 @@ export class Renderer {
     drawStarfield(ctx, this.field, this.scroll, time, calm);
 
     const rocket = this.rocket(world);
-    drawRocket(ctx, rocket.x, rocket.y, rocket.size, time, world.phase === "won" ? this.dock : 0);
+    if (rocket.alpha > 0) {
+      ctx.globalAlpha = rocket.alpha;
+      drawRocket(ctx, rocket.x, rocket.y, rocket.size, time, world.phase === "won" ? this.dock : 0);
+      ctx.globalAlpha = 1;
+    }
 
     for (const piece of world.debris) drawDebris(ctx, piece, time, astro.x, astro.y);
 
@@ -117,26 +125,24 @@ export class Renderer {
         r: astro.r * (1 - docked * 0.7),
       };
 
-      if (world.phase !== "lost" && world.phase !== "won") {
-        drawChargeRing(ctx, drawn, {
-          charge: boosterCharge(world.booster),
-          ready: isBoosterReady(world.booster),
-          boosting,
-          time,
-          calm,
-        });
-      }
-
-      // A spun-out suit blinks, so the moment control comes back is visible.
-      const blink = isInvulnerable(astro) && !calm ? 0.45 + 0.55 * Math.abs(Math.sin(time * 18)) : 1;
-      ctx.globalAlpha = blink;
-      drawAstronaut(ctx, drawn, {
+      const style = {
         charge: boosterCharge(world.booster),
         ready: isBoosterReady(world.booster),
         boosting,
         time,
         calm,
-      });
+        health: healthFraction(world.health),
+        band: healthBand(world.health),
+      };
+
+      if (world.phase !== "lost" && world.phase !== "won") {
+        drawChargeRing(ctx, drawn, style);
+      }
+
+      // A spun-out suit blinks, so the moment control comes back is visible.
+      const blink = isInvulnerable(astro) && !calm ? 0.45 + 0.55 * Math.abs(Math.sin(time * 18)) : 1;
+      ctx.globalAlpha = blink;
+      drawAstronaut(ctx, drawn, style);
       ctx.globalAlpha = 1;
     }
 

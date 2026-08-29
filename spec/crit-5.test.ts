@@ -18,7 +18,15 @@ import {
   tickBooster,
 } from "../src/game/booster.ts";
 import { FATAL_FRACTION, classifyHit } from "../src/game/collision.ts";
-import { RUN_SECONDS, progressAt } from "../src/game/difficulty.ts";
+import { RUN_SECONDS, progressAt, rocketApproach } from "../src/game/difficulty.ts";
+import {
+  FATAL_DAMAGE,
+  GRAZE_DAMAGE,
+  HEALTH_MAX,
+  applyDamage,
+  healthBand,
+  isSpent,
+} from "../src/game/health.ts";
 import { createWorld, step } from "../src/game/world.ts";
 import type { World } from "../src/game/world.ts";
 
@@ -138,6 +146,72 @@ function startedRun(): World {
   });
 }
 
+// ---------------------------------------------------------------------------
+// The health pool. This exists because of a play session, not a spec line: the
+// game was hit-heavy and death-free, so runs never resolved. These tests pin
+// the shape of the fix — damage is graded, it runs out, and it runs out in the
+// three bands the ring draws.
+// ---------------------------------------------------------------------------
+describe("the suit's health", () => {
+  it("starts full and shows green", () => {
+    expect(healthBand(HEALTH_MAX)).toBe("ok");
+    expect(isSpent(HEALTH_MAX)).toBe(false);
+  });
+
+  it("costs more for a dead-on hit than for a corner clip", () => {
+    expect(FATAL_DAMAGE).toBeGreaterThan(GRAZE_DAMAGE);
+    expect(applyDamage(HEALTH_MAX, "fatal")).toBe(HEALTH_MAX - FATAL_DAMAGE);
+    expect(applyDamage(HEALTH_MAX, "graze")).toBe(HEALTH_MAX - GRAZE_DAMAGE);
+    expect(applyDamage(HEALTH_MAX, "miss")).toBe(HEALTH_MAX);
+  });
+
+  it("runs out, and cannot go below empty", () => {
+    let health = HEALTH_MAX;
+    for (let i = 0; i < 20; i += 1) health = applyDamage(health, "fatal");
+    expect(health).toBe(0);
+    expect(isSpent(health)).toBe(true);
+  });
+
+  it("passes through green, then amber, then red — never backwards", () => {
+    const order = ["ok", "hurt", "critical"];
+    let seen = 0;
+    for (let health = HEALTH_MAX; health >= 1; health -= 1) {
+      const band = healthBand(health);
+      const at = order.indexOf(band);
+      expect(at, `${band} at ${health} is out of order`).toBeGreaterThanOrEqual(seen);
+      seen = at;
+    }
+    expect(order[seen]).toBe("critical");
+  });
+
+  it("gives every band at least one step of the bar to live in", () => {
+    // A band no value maps to is a colour the player would never see.
+    const bands = new Set<string>();
+    for (let health = 1; health <= HEALTH_MAX; health += 1) bands.add(healthBand(health));
+    expect([...bands].sort()).toEqual(["critical", "hurt", "ok"]);
+  });
+
+  it("takes more than one dead-on hit to end a run", () => {
+    expect(Math.ceil(HEALTH_MAX / FATAL_DAMAGE)).toBeGreaterThan(1);
+  });
+});
+
+/** Park a rock exactly where the suit is, so the next step is a dead-on hit. */
+function hitDeadOn(world: World): void {
+  world.debris = [
+    {
+      ...createWorld({ width: 900, height: 600, seed: 3 }).debris[0],
+      kind: "rock",
+      x: world.astro.x,
+      y: world.astro.y,
+      vx: 0,
+      vy: 0,
+      r: 24,
+      telegraph: 0,
+    },
+  ];
+}
+
 describe("a run", () => {
   it("waits on the title screen until the player acts", () => {
     const world = createWorld({ width: 900, height: 600, seed: 7 });
@@ -149,21 +223,24 @@ describe("a run", () => {
     expect(startedRun().phase).toBe("flying");
   });
 
-  it("can be lost — a dead-on hit ends it", () => {
+  it("can be lost — enough hits end it", () => {
+    // Spec line 2, and the reason the health pool exists at all: before it, a
+    // player could be hit over and over and the run never resolved.
     const world = startedRun();
-    world.debris = [
-      {
-        ...world.debris[0],
-        kind: "rock",
-        x: world.astro.x,
-        y: world.astro.y,
-        vx: 0,
-        vy: 0,
-        r: 24,
-        telegraph: 0,
-      },
-    ];
+    world.debris = [];
+    world.health = FATAL_DAMAGE;
+    hitDeadOn(world);
     expect(fly(world, DT).phase).toBe("lost");
+  });
+
+  it("survives a dead-on hit with health to spare", () => {
+    const world = startedRun();
+    world.debris = [];
+    hitDeadOn(world);
+    const hurt = fly(world, DT);
+    expect(hurt.phase).toBe("flying");
+    expect(hurt.health).toBe(HEALTH_MAX - FATAL_DAMAGE);
+    expect(inControl(hurt.astro)).toBe(false);
   });
 
   it("can be won — reaching the rocket ends it too", () => {
@@ -194,27 +271,29 @@ describe("a run", () => {
     expect(clipped.phase).toBe("flying");
     expect(inControl(clipped.astro)).toBe(false);
     expect(clipped.astro.spin).toBeCloseTo(SPIN_DURATION, 1);
+    expect(clipped.health).toBe(HEALTH_MAX - GRAZE_DAMAGE);
   });
 
-  it("cannot be killed while already spinning out", () => {
-    // Without this, one clip in heavy traffic chains straight into a death the
-    // player had no way to avoid, and the recovery mechanic is a lie.
+  it("keeps the rocket out of sight until the run is nearly over", () => {
+    // It used to grow through the whole run as a progress gauge, and read as
+    // confusing background furniture instead. Now it is the ending arriving.
+    expect(rocketApproach(0)).toBe(0);
+    expect(rocketApproach(RUN_SECONDS * 0.5)).toBe(0);
+    expect(rocketApproach(RUN_SECONDS * 0.85)).toBe(0);
+    expect(rocketApproach(RUN_SECONDS)).toBe(1);
+  });
+
+  it("cannot be hit again while already spinning out", () => {
+    // Without this, one clip in heavy traffic drains the whole bar in a handful
+    // of frames, and the recovery mechanic is a lie.
     const world = startedRun();
+    world.debris = [];
     world.astro.spin = SPIN_DURATION;
     expect(isInvulnerable(world.astro)).toBe(true);
-    world.debris = [
-      {
-        ...world.debris[0],
-        kind: "rock",
-        x: world.astro.x,
-        y: world.astro.y,
-        vx: 0,
-        vy: 0,
-        r: 24,
-        telegraph: 0,
-      },
-    ];
-    expect(fly(world, DT).phase).toBe("flying");
+    hitDeadOn(world);
+    const after = fly(world, DT);
+    expect(after.phase).toBe("flying");
+    expect(after.health).toBe(HEALTH_MAX);
   });
 
   it("gives control back on its own once the spin runs out", () => {

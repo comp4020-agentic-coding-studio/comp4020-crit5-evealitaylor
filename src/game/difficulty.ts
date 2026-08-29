@@ -90,6 +90,9 @@ export function isDocking(elapsed: number): boolean {
  * number to read.
  */
 export function rocketApproach(elapsed: number): number {
-  const start = RUN_SECONDS * 0.45;
-  return Math.min(1, Math.max(0, (elapsed - start) / (RUN_SECONDS - start)));
+  // 0 for most of the run, so there is nothing sitting in the background to
+  // read as scenery. It arrives with the docking stretch — the field thins and
+  // the ship comes up to meet you, which is the ending rather than a gauge.
+  const start = RUN_SECONDS - DOCK_SECONDS;
+  return Math.min(1, Math.max(0, (elapsed - start) / DOCK_SECONDS));
 }
