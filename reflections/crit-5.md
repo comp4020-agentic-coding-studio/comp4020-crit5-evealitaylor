@@ -2,28 +2,17 @@
 
 ## The breakthrough
 
-Watching a test go green and then finding the thing broken anyway. Every test in
-the repo was happy while the title clipped to **SPACEWAL** on a phone, and the
-only reason I found it was that I opened a screenshot. That reframed what the
-checks are for. They aren't proof the work is good; they're a record of the
-specific ways I already know it can go wrong. So the fix wasn't the CSS — it was
-adding a sensor for the class of bug, in a file that carries into next week
-rather than one that retires with this brief.
-
-The same idea paid off twice. When the feedback came back — hit constantly,
-never actually dying — I could have nudged numbers until it felt right. Instead
-I played the real simulation across forty seeds with a policy standing in for an
-attentive player, and used the numbers to move two spawn intervals. What made
-that possible was a decision from day one: keep the simulation pure and free of
-the canvas, so it can be played without a browser. Architecture I chose for
-testability turned out to be the thing that let me *measure* a design question I
-would otherwise have guessed at.
+I had trouble thinking of the right kind of game to make, and was messing about
+on Cool Math Games and similar sites but inspiration wasn't striking, most of
+the games were too complex for what I would be able to think of and build. Then,
+while on other work, my internet dropped out and I was reminded of the Google
+Dinosaur game, which sparked an idea. 
 
 ## What it changed
 
-I've started treating "the tests pass" as the beginning of verification rather
-than the end of it. The agent is very good at making checks green and completely
-indifferent to whether the green means anything, which makes deciding *what
-gets checked* the part that is actually mine. I want to be the developer whose
-judgement is written down where it keeps working — in the harness — rather than
-re-supplied by hand every time.
+I realised that I often come up with my best ideas when I remove the problem from
+the front of my mind. This was a case where I stopped thinking about this particular
+project in favour of other priority work, and was able to have an idea come to me
+rather than forcing myself to have an idea. It's a good reminder that sometimes work
+can just involve sitting with a concept until inspiration strikes, and that creativity,
+which in my practice is equally weighted with technicality, needs room to breathe.

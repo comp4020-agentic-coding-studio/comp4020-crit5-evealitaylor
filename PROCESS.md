@@ -12,24 +12,20 @@ astronaut reaches the spacecraft, or their health drops to 0 from too many hits.
 
 Both came from playing it, not from reading it.
 
-**1. Debris that couldn't kill you.** I was hit constantly across a full run and
-never died, so runs never resolved — and a game that can't be lost fails the
-spec. The obvious fix was instant death. Instead a hit drains a six-point pool
-— three for a dead-on, one for a clip — both still spinning you out, so its
-cost is visible as it lands. Then that broke the other half: a
-careful player now died around 90s of 120s, never seeing the rocket. Rather than
-tune by feel I played the simulation across 40 seeds with a look-ahead policy,
-moved two spawn intervals until it got home 24 times in 40 — worst run still
-dead at 64s — then made that probe a test demanding *both* endings.
+**1. Debris that couldn't kill you.** When initially testing the game, I was being
+hit by debris but my astronaut wasn't dying and the game didn't restart. My initial
+fix was to make the death happen from a single hit. However, this made the game kind
+of boring because its possible to just die too soon. In order to resolve this, a hit
+will have varying impact: three for a dead-on, one for a clip — both still spinning
+you out, and a health bar shows the status.
 [`57a1a37`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-evealitaylor/commit/57a1a37),
 [`71b262b`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-evealitaylor/commit/71b262b)
 
 ![The ring draining across one run: green, amber, red, then death](docs/health-bands.png)
 
-**2. A destination that read as scenery.** The ship sat in the background for
-most of the run, making the goal confusing rather than clear. Bigger or brighter
-would only make the wrong thing louder, so I removed it from the run: it now
-arrives with the final stretch, as the field thins. Screenshotting the new
-ending caught a fault it exposed — the wordmark faded back in across the docked
-ship.
+**2. A destination that read as scenery.** In the first build, the spacecraft sat in the background for
+most of the run, making the goal confusing rather than clear. I removed it from the run so it now
+arrives with the final stretch, as the field thins. This gives the impression for most
+of the game that the player is floating in space and the end goal is unclear, and players
+are rewarded with the end goal after playing well, rather than aiming for it all along.
 [`71b262b`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit5-evealitaylor/commit/71b262b)
